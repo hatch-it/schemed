@@ -1,68 +1,46 @@
-package db
+
+package main
 
 import (
+	"fmt"
+	"log"
 	"database/sql"
-	"flag"
 	_ "github.com/lib/pq"
+
+	"github.com/gin-gonic/gin"
 )
 
-type DB sql.DB
+// App contains all the state for the entire application.
+type App struct {
+	Router *gin.Engine
+	DB *sql.DB
+}
 
-// Open a connection to the database.
-func Open() DB {
-	var production bool
-	var dbName, dbUser, dbPassword string
+// Initialize takes the details required to connect to the database.
+// Create a connection and wire up the routes to response accordingly.
+func (a *App) Initialize(user, password, dbname string) {
+	flags := fmt.Sprintf("host=localhost sslmode=disable user=%s password=%s dbname=%s", user, password, dbname)
 
-	flag.BoolVar(&production, "production", false, "optimize execution for production")
-	flag.StringVar(&dbName, "db", "schemed", "database name")
-	flag.StringVar(&dbUser, "user", "app", "database username")
-	flag.StringVar(&dbPassword, "password", "", "database password")
-	flag.Parse()
-
-	var options string
-
-	if production {
-		options = "host=localhost dbname=" + dbName + " user=" + dbUser
-	} else {
-		options = "host=localhost sslmode=disable dbname=" + dbName + " user=" + dbUser + " password=" + dbPassword
-	}
-
-	db, err := sql.Open("postgres", options)
+	var err error
+	a.DB, err = sql.Open("postgres", flags)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	setup(db)
+	provision(a.DB)
 
-	return db
+	a.Router = gin.Default()
+	
+	
 }
 
-// Run an insertion into an existing table with the given fields.
-// Returns the generated id.
-func Insert(db *sql.DB, table string, fields map[string]interface{}) string {
-	queries := []string{
-		"INSERT INTO ",
-		table,
-		"(",
-		joinKeys(fields, ", "),
-		") ",
-		"VALUES (",
-		joinValues(fields, ", "),
-		") RETURNING id;",
-	}
-
-	var id string
-	err := db.QueryRow(strings.join(query)).Scan(&id)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return id
+// Run starts the application.
+func (a *App) Run(addr string) {
+	a.Router.Run()
 }
 
-// Run some preliminary queries after connecting to the database.
-func setup(db *sql.DB) {
+// Provision the database with some basic models.
+func provision(db *sql.DB) {
 	log.Print("Provisioning the database (this might take a minute or two)")
 
 	queries := []string{`

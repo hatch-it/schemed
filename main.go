@@ -1,25 +1,13 @@
 package main
 
-import (
-	"fmt"
-	"golang.org/x/crypto/bcrypt"
-	"log"
-	"net/http"
-)
-
-func Hash(password string) []byte {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return hash
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello, %s", r.URL.Path)
-}
+import "os"
 
 func main() {
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+	app := App{}
+	app.Initialize(
+		os.Getenv("DB_USERNAME"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_NAME"),
+	)
+	app.Run(":8080")
 }

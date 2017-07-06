@@ -1,10 +1,11 @@
-package schemed
+package main
 
 import "time"
 
+// Model contains common fields.
 type Model struct {
-	id        string
-	createdAt time.Time
-	updatedAt time.Time
-	deletedAt time.Time
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	DeletedAt time.Time `json:"deletedAt"`
 }

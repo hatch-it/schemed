@@ -12,8 +12,9 @@ import (
 
 // App contains all the state for the entire application.
 type App struct {
-	Router *gin.Engine
-	DB *sql.DB
+	Router 		*gin.Engine
+	DB 			*sql.DB
+	Services 	[]Service
 }
 
 // Initialize takes the details required to connect to the database.
@@ -30,8 +31,18 @@ func (a *App) Initialize(user, password, dbname string) {
 	provision(a.DB)
 
 	a.Router = gin.Default()
-	
-	
+	a.Services = []Service{
+		UserService{a.DB, "users"},
+	}
+
+	for _, service := range a.Services {
+		name := service.GetName()
+		a.Router.GET(name + ":id", service.Get)
+		a.Router.GET(name, service.Fetch)
+		a.Router.POST(name, service.Create)
+		a.Router.POST(name + ":id", service.Update)
+		a.Router.DELETE(name + ":id", service.Delete)
+	}
 }
 
 // Run starts the application.
@@ -44,12 +55,12 @@ func provision(db *sql.DB) {
 	log.Print("Provisioning the database (this might take a minute or two)")
 
 	queries := []string{`
-		CREATE EXTENSION IF NOT EXISTS pgcrypto; -- Enable gen_random_uuid()
-		SET TIMEZONE TO 'Etc/UTC';               -- Set default timezone to UTC
+		CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; -- Enable gen_random_uuid()
+		SET TIMEZONE TO 'Etc/UTC';                  -- Set default timezone to UTC
 	`, `
 		-- User Table
 		CREATE TABLE IF NOT EXISTS users(
-			id         UUID         PRIMARY KEY     DEFAULT gen_random_uuid(),
+			id         UUID         PRIMARY KEY     DEFAULT uuid_generate_v4(),
 			created_at TIMESTAMP    WITH TIME ZONE  DEFAULT now(),
 			updated_at TIMESTAMP    WITH TIME ZONE  DEFAULT now(),
 			deleted_at TIMESTAMP		WITH TIME ZONE,

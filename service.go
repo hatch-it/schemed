@@ -1,30 +1,29 @@
 package main
 
 import (
-	"database/sql"
 	"github.com/gin-gonic/gin"
 )
 
 // Service is a publicly exposed endpoint for resources.
 type Service interface {
+	// Get the name of the endpoint
+	GetName() string
+
+	// Initialize the service with access to the database.
+	Initialize() error
+
 	// Get an instance of a resource.
-	Get(db *sql.DB, c *gin.Context) error
+	Get(c *gin.Context)
 
 	// Get several instances of a resource.
-	Fetch(db *sql.DB, c *gin.Context) error
+	Fetch(c *gin.Context)
 
 	// Create an instance of a resource.
-	Create(db *sql.DB, c *gin.Context) error
+	Create(c *gin.Context)
 
 	// Update an existing instance of a resource.
-	Update(db *sql.DB, c *gin.Context) error
+	Update(c *gin.Context)
 
 	// Delete an existing instance of a resource.
-	Delete(db *sql.DB, c *gin.Context) error
-}
-
-type Services []Service
-
-var services = Services{
-	User,
+	Delete(c *gin.Context)
 }

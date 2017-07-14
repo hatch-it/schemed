@@ -36,8 +36,7 @@ func (a *App) Initialize(user, password, dbname string) {
 	}
 
 	for _, service := range a.Services {
-		service.Initialize()
-		name := service.GetName()
+		name := service.Initialize()
 		a.Router.GET(name + ":id", service.Get)
 		a.Router.GET(name, service.Fetch)
 		a.Router.POST(name, service.Create)

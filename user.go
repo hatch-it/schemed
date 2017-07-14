@@ -25,11 +25,9 @@ type UserService struct {
 }
 
 // Methods required by schemed.Service
-func (s UserService) GetName() string {
-	return s.Name
-}
-func (s UserService) Initialize() {
+func (s UserService) Initialize() string {
 	s.DB.AutoMigrate(&User{})
+	return s.Name
 }
 func (s UserService) Get(c *gin.Context) {
 	id := c.Param("id")

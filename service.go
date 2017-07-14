@@ -6,11 +6,8 @@ import (
 
 // Service is a publicly exposed endpoint for resources.
 type Service interface {
-	// Get the name of the endpoint
-	GetName() string
-
-	// Initialize the service with access to the database.
-	Initialize()
+	// Initialize the service and return the name of the endpoint
+	Initialize() string
 
 	// Get an instance of a resource.
 	Get(c *gin.Context)

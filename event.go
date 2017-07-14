@@ -1,14 +1,17 @@
 package main
 
-import "time"
+import (
+	"time"
+	"github.com/jinzhu/gorm"
+)
 
 // Event defines a social gathering of any sort.
 type Event struct {
-	Model
+	gorm.Model
 
-	Venue     string    `json:"venue"`
-	StartTime time.Time `json:"startTime"`
-	EndTime   time.Time `json:"endTime"`
+	Venue     string    `json:"venue" form:"venue"`
+	StartTime time.Time `json:"startTime" form:"startTime"`
+	EndTime   time.Time `json:"endTime" form:"endTime"`
 
 	facebook string
 }

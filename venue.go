@@ -1,10 +1,15 @@
 package main
 
+import (
+	"github.com/jinzhu/gorm"
+)
+
+
 // Venue represents a place where events can occur.
 type Venue struct {
-	Model
+	gorm.Model
 
-	Google     string `json:"google"`
-	Foursquare string `json:"foursquare"`
-	Yelp       string `json:"yelp"`
+	Google     string `json:"google" form:"google"`
+	Foursquare string `json:"foursquare" form:"foursquare"`
+	Yelp       string `json:"yelp" form:"yelp"`
 }

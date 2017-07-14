@@ -1,27 +1,26 @@
 package main
 
 import (
-	"database/sql"
-	"log"
 	"net/http"
 
+	"github.com/jinzhu/gorm"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // User contains all user-related data.
 type User struct {
-	Model
+	gorm.Model
 
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"-" binding:"required"`
+	Email    string `json:"email" form:"email"`
+	Password string `json:"password" form:"password"`
 }
 
 type Users []User
 
 // UserService exposes the User model's endpoints
 type UserService struct {
-	DB   *sql.DB
+	DB   *gorm.DB
 	Name string
 }
 
@@ -29,129 +28,68 @@ type UserService struct {
 func (s UserService) GetName() string {
 	return s.Name
 }
-func (s UserService) Initialize() error {
-	_, err := s.DB.Exec(`
-		CREATE TABLE IF NOT EXISTS users(
-			id         UUID         PRIMARY KEY     DEFAULT uuid_generate_v4(),
-			created_at TIMESTAMP    WITH TIME ZONE  DEFAULT now(),
-			updated_at TIMESTAMP    WITH TIME ZONE  DEFAULT now(),
-			deleted_at TIMESTAMP	WITH TIME ZONE,
-
-			email      VARCHAR(254) NOT NULL,
-			password   VARCHAR(74)  NOT NULL
-		);
-	`)
-	return err
+func (s UserService) Initialize() {
+	s.DB.AutoMigrate(&User{})
 }
 func (s UserService) Get(c *gin.Context) {
 	id := c.Param("id")
-
 	var model User
-	row := s.DB.QueryRow("SELECT * FROM $1 WHERE id = $2", s.Name, id)
-	err := row.Scan(&model)
-
-	c.Header("Content-Type", "application/vnd.api+json")
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"errors": []gin.H{
-				gin.H{
-					"status": http.StatusNotFound,
-					"source": gin.H{"pointer": "/data"},
-					"detail": "Could not find a User with id " + id,
-				},
-			},
-		})
-	} else {
-		c.JSON(http.StatusOK, gin.H{
-			"links": gin.H{
-				"self": c.Request.URL,
-			},
-			"data": gin.H{
-				"type":       s.Name,
-				"id":         id,
-				"attributes": model,
-			},
-		})
-	}
+	s.DB.First(&model, id)
+	model.Password = ""
+	c.JSON(http.StatusOK, model)
 }
 func (s UserService) Fetch(c *gin.Context) {
-	rows, err := s.DB.Query("SELECT * FROM $1", s.Name)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{})
-	}
-	defer rows.Close()
-
-	users := make([]User, 0)
-	var user User
-
-	for rows.Next() {
-		err := rows.Scan(&user)
-		if err != nil {
-			log.Fatal(err) // How would you even get here?
-		}
-		users = append(users, user)
-	}
-
-	c.Header("Content-Type", "application/vnd.api+json")
-
-	c.JSON(http.StatusOK, gin.H{
-		"links": gin.H{
-			"self": c.Request.URL,
-		},
-		"data": users,
-	})
-}
-
-func (s UserService) Create(c *gin.Context) {
-	var user User
-	if c.BindJSON(&user) != nil {
-		c.Header("Content-Type", "application/vnd.api+json")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"errors": []gin.H{
-				gin.H{
-					"status": http.StatusNotAcceptable,
-					"title":  "Required User fields not specified",
-					"detail": "The required fields of User are email and password.",
-				},
-			},
-		})
+	var filters User
+	if c.Bind(&filters) == nil {
+		filters.Password = "" // Don't filter by password
+		var models Users
+		s.DB.Where(&filters).Find(&models)
+		c.JSON(http.StatusOK, models)
 	} else {
-		hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-		if err != nil {
-			log.Fatal(err) // How would you even get here?
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Filters not recognized"})
+	}
+}
+func (s UserService) Create(c *gin.Context) {
+	var body User
+	if c.BindJSON(&body) == nil {
+		if body.Email == "" || body.Password == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password required"})
+		} else {
+			hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+			if err != nil {
+				panic("Unable to encrypt password")
+			}
+			body.Password = string(hash[:])
+			s.DB.Create(&body)
+			body.Password = ""
+			c.JSON(http.StatusOK, body)
 		}
-		_, err = s.DB.Exec(`INSERT INTO $1 (email, password) VALUES ('$2', '$3')`, s.Name, user.Email, hash)
-		if err != nil {
-			log.Fatal(err) // How would you even get here?
-		}
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Not a valid user"})
 	}
 }
 func (s UserService) Update(c *gin.Context) {
-	var user User
-	id := c.Param("id")
-	if c.BindJSON(&user) != nil || id == "" {
-
+	var body User
+	if c.BindJSON(&body) == nil {
+		if body.Password != "" {
+			hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+			if err != nil {
+				panic("Unable to encrypt password")
+			}
+			body.Password = string(hash[:])
+		}
+		id := c.Param("id")
+		s.DB.Where("id = ?", id).Updates(&body)
+		body.Password = ""
+		c.JSON(http.StatusOK, body)
 	} else {
-		hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-		if err != nil {
-			log.Fatal(err) // How would you even get here?
-		}
-		fields := 
-		_, err = s.DB.Exec(`UPDATE $1 SET $2 WHERE id = '$3'`, s.Name, fields, id)
-		if err != nil {
-			log.Fatal(err) // How would you even get here?
-		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Not a valid user"})
 	}
 }
 func (s UserService) Delete(c *gin.Context) {
-	c.Header("Content-Type", "application/vnd.api+json")
-	c.JSON(http.StatusNotImplemented, gin.H{
-		"errors": []gin.H{
-			gin.H{
-				"title":  "Feature not implemented",
-				"detail": "We have yet to add this feature in yet. Please wait while we're braining.",
-			},
-		},
-	})
+	id := c.Param("id")
+	var model User
+	s.DB.First(&model, id)
+	s.DB.Model(&model).Delete(&User{})
+	c.JSON(http.StatusOK, model)
 }

@@ -4,8 +4,8 @@ package main
 import (
 	"fmt"
 	"log"
-	"database/sql"
-	_ "github.com/lib/pq"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,7 +13,7 @@ import (
 // App contains all the state for the entire application.
 type App struct {
 	Router 		*gin.Engine
-	DB 			*sql.DB
+	DB 			*gorm.DB
 	Services 	[]Service
 }
 
@@ -23,12 +23,12 @@ func (a *App) Initialize(user, password, dbname string) {
 	flags := fmt.Sprintf("host=localhost sslmode=disable user=%s password=%s dbname=%s", user, password, dbname)
 
 	var err error
-	a.DB, err = sql.Open("postgres", flags)
+	a.DB, err = gorm.Open("postgres", flags)
 	if err != nil {
-		log.Fatal(err)
+		panic("Failed to connect to database")
 	}
 
-	provision(a.DB)
+	//provision(a.DB)
 
 	a.Router = gin.Default()
 	a.Services = []Service{
@@ -36,6 +36,7 @@ func (a *App) Initialize(user, password, dbname string) {
 	}
 
 	for _, service := range a.Services {
+		service.Initialize()
 		name := service.GetName()
 		a.Router.GET(name + ":id", service.Get)
 		a.Router.GET(name, service.Fetch)
@@ -51,7 +52,7 @@ func (a *App) Run(addr string) {
 }
 
 // Provision the database with some basic models.
-func provision(db *sql.DB) {
+func provision(db *gorm.DB) {
 	log.Print("Provisioning the database (this might take a minute or two)")
 
 	queries := []string{`
@@ -63,7 +64,7 @@ func provision(db *sql.DB) {
 			id         UUID         PRIMARY KEY     DEFAULT uuid_generate_v4(),
 			created_at TIMESTAMP    WITH TIME ZONE  DEFAULT now(),
 			updated_at TIMESTAMP    WITH TIME ZONE  DEFAULT now(),
-			deleted_at TIMESTAMP		WITH TIME ZONE,
+			deleted_at TIMESTAMP	WITH TIME ZONE,
 
 			email      VARCHAR(254) NOT NULL,
 			password   VARCHAR(74)  NOT NULL
@@ -97,7 +98,7 @@ func provision(db *sql.DB) {
 	`}
 
 	for _, query := range queries {
-		_, err := db.Exec(query)
+		err := db.Exec(query)
 		if err != nil {
 			log.Fatal(err)
 		}

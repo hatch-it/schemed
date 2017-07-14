@@ -10,7 +10,7 @@ type Service interface {
 	GetName() string
 
 	// Initialize the service with access to the database.
-	Initialize() error
+	Initialize()
 
 	// Get an instance of a resource.
 	Get(c *gin.Context)

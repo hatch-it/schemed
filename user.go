@@ -1,8 +1,10 @@
 package main
 
 import (
-	"log"
 	"database/sql"
+	"log"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -11,23 +13,16 @@ import (
 type User struct {
 	Model
 
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"-" binding:"required"`
 }
 
-// Hash a password
-func Hash(password string) []byte {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return hash
-}
+type Users []User
 
 // UserService exposes the User model's endpoints
 type UserService struct {
-	DB 		*sql.DB
-	Name 	string
+	DB   *sql.DB
+	Name string
 }
 
 // Methods required by schemed.Service
@@ -46,7 +41,7 @@ func (s UserService) Initialize() error {
 			password   VARCHAR(74)  NOT NULL
 		);
 	`)
-	return err;
+	return err
 }
 func (s UserService) Get(c *gin.Context) {
 	id := c.Param("id")
@@ -57,71 +52,106 @@ func (s UserService) Get(c *gin.Context) {
 
 	c.Header("Content-Type", "application/vnd.api+json")
 
-	var data gin.H
-
 	if err != nil {
-		data = gin.H{
-			"type": s.Name,
-			"id": id,
-			"attributes": model,
-		}
+		c.JSON(http.StatusBadRequest, gin.H{
+			"errors": []gin.H{
+				gin.H{
+					"status": http.StatusNotFound,
+					"source": gin.H{"pointer": "/data"},
+					"detail": "Could not find a User with id " + id,
+				},
+			},
+		})
 	} else {
-		data = gin.H{}
+		c.JSON(http.StatusOK, gin.H{
+			"links": gin.H{
+				"self": c.Request.URL,
+			},
+			"data": gin.H{
+				"type":       s.Name,
+				"id":         id,
+				"attributes": model,
+			},
+		})
 	}
-
-	c.JSON(200, gin.H{
-		"data": data,
-		"meta": gin.H{},
-	})
 }
 func (s UserService) Fetch(c *gin.Context) {
+	rows, err := s.DB.Query("SELECT * FROM $1", s.Name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{})
+	}
+	defer rows.Close()
+
+	users := make([]User, 0)
+	var user User
+
+	for rows.Next() {
+		err := rows.Scan(&user)
+		if err != nil {
+			log.Fatal(err) // How would you even get here?
+		}
+		users = append(users, user)
+	}
+
 	c.Header("Content-Type", "application/vnd.api+json")
-	c.JSON(500, gin.H{
-		"errors": []gin.H{
-			gin.H{
-				"title": "Feature not implemented",
-				"detail": "We have yet to add this feature in yet. Please wait while we're braining.",
-			},
+
+	c.JSON(http.StatusOK, gin.H{
+		"links": gin.H{
+			"self": c.Request.URL,
 		},
-		"meta": gin.H{},
+		"data": users,
 	})
 }
+
 func (s UserService) Create(c *gin.Context) {
-	s.DB.Exec(`
-		INSERT INTO 
-	`)
-	c.Header("Content-Type", "application/vnd.api+json")
-	c.JSON(500, gin.H{
-		"errors": []gin.H{
-			gin.H{
-				"title": "Feature not implemented",
-				"detail": "We have yet to add this feature in yet. Please wait while we're braining.",
+	var user User
+	if c.BindJSON(&user) != nil {
+		c.Header("Content-Type", "application/vnd.api+json")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"errors": []gin.H{
+				gin.H{
+					"status": http.StatusNotAcceptable,
+					"title":  "Required User fields not specified",
+					"detail": "The required fields of User are email and password.",
+				},
 			},
-		},
-		"meta": gin.H{},
-	})
+		})
+	} else {
+		hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Fatal(err) // How would you even get here?
+		}
+		_, err = s.DB.Exec(`INSERT INTO $1 (email, password) VALUES ('$2', '$3')`, s.Name, user.Email, hash)
+		if err != nil {
+			log.Fatal(err) // How would you even get here?
+		}
+	}
 }
 func (s UserService) Update(c *gin.Context) {
-	c.Header("Content-Type", "application/vnd.api+json")
-	c.JSON(500, gin.H{
-		"errors": []gin.H{
-			gin.H{
-				"title": "Feature not implemented",
-				"detail": "We have yet to add this feature in yet. Please wait while we're braining.",
-			},
-		},
-		"meta": gin.H{},
-	})
+	var user User
+	id := c.Param("id")
+	if c.BindJSON(&user) != nil || id == "" {
+
+	} else {
+		hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Fatal(err) // How would you even get here?
+		}
+		fields := 
+		_, err = s.DB.Exec(`UPDATE $1 SET $2 WHERE id = '$3'`, s.Name, fields, id)
+		if err != nil {
+			log.Fatal(err) // How would you even get here?
+		}
+	}
 }
 func (s UserService) Delete(c *gin.Context) {
 	c.Header("Content-Type", "application/vnd.api+json")
-	c.JSON(500, gin.H{
+	c.JSON(http.StatusNotImplemented, gin.H{
 		"errors": []gin.H{
 			gin.H{
-				"title": "Feature not implemented",
+				"title":  "Feature not implemented",
 				"detail": "We have yet to add this feature in yet. Please wait while we're braining.",
 			},
 		},
-		"meta": gin.H{},
 	})
 }

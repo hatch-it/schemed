@@ -2,20 +2,18 @@ package main
 
 import (
 	"os"
-	"github.com/joho/godotenv"
+	"fmt"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		panic("Error loading .env file")
-	}
-
 	app := App{}
 	app.Initialize(
-		os.Getenv("DB_USERNAME"),
-		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_HOST"),
 		os.Getenv("DB_NAME"),
 	)
-	app.Run(":8080")
+	defer app.Close()
+
+	port := os.Getenv("PORT")
+	fmt.Println("Listening on port " + port)
+	app.Run(":" + port)
 }

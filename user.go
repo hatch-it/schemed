@@ -1,17 +1,16 @@
 package main
 
 import (
+	"time"
 	"net/http"
-
-	"github.com/jinzhu/gorm"
+	"gopkg.in/mgo.v2"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // User contains all user-related data.
 type User struct {
-	gorm.Model
-
+	Model
 	Email    string `json:"email" form:"email"`
 	Password string `json:"password" form:"password"`
 }
@@ -20,19 +19,21 @@ type Users []User
 
 // UserService exposes the User model's endpoints
 type UserService struct {
-	DB   *gorm.DB
+	DB   *mgo.Database
 	Name string
 }
 
 // Methods required by schemed.Service
 func (s UserService) Initialize() string {
-	s.DB.AutoMigrate(&User{})
-	return s.Name
+	return "users"
 }
 func (s UserService) Get(c *gin.Context) {
 	id := c.Param("id")
 	var model User
-	s.DB.First(&model, id)
+	err := s.DB.C("User").FindId(id).One(&model)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	}
 	model.Password = ""
 	c.JSON(http.StatusOK, model)
 }
@@ -41,7 +42,7 @@ func (s UserService) Fetch(c *gin.Context) {
 	if c.Bind(&filters) == nil {
 		filters.Password = "" // Don't filter by password
 		var models Users
-		s.DB.Where(&filters).Find(&models)
+		s.DB.C("User").Find(&filters).All(&models)
 		c.JSON(http.StatusOK, models)
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Filters not recognized"})
@@ -58,7 +59,10 @@ func (s UserService) Create(c *gin.Context) {
 				panic("Unable to encrypt password")
 			}
 			body.Password = string(hash[:])
-			s.DB.Create(&body)
+			now := time.Now()
+			body.CreatedOn = now
+			body.UpdatedOn = now
+			s.DB.C("User").Insert(&body)
 			body.Password = ""
 			c.JSON(http.StatusOK, body)
 		}
@@ -77,7 +81,7 @@ func (s UserService) Update(c *gin.Context) {
 			body.Password = string(hash[:])
 		}
 		id := c.Param("id")
-		s.DB.Where("id = ?", id).Updates(&body)
+		s.DB.C("Users").UpdateId(id, &body)
 		body.Password = ""
 		c.JSON(http.StatusOK, body)
 	} else {
@@ -87,7 +91,7 @@ func (s UserService) Update(c *gin.Context) {
 func (s UserService) Delete(c *gin.Context) {
 	id := c.Param("id")
 	var model User
-	s.DB.First(&model, id)
-	s.DB.Model(&model).Delete(&User{})
+	s.DB.C("User").FindId(id).One(&model)
+	s.DB.C("User").RemoveId(id)
 	c.JSON(http.StatusOK, model)
 }

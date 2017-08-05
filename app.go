@@ -2,33 +2,28 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
-
+	"gopkg.in/mgo.v2"
 	"github.com/gin-gonic/gin"
 )
 
 // App contains all the state for the entire application.
 type App struct {
 	Router 		*gin.Engine
-	DB 			*gorm.DB
+	Session		*mgo.Session
+	DB 			*mgo.Database
 	Services 	[]Service
 }
 
 // Initialize takes the details required to connect to the database.
 // Create a connection and wire up the routes to response accordingly.
-func (a *App) Initialize(user, password, dbname string) {
-	flags := fmt.Sprintf("host=localhost sslmode=disable user=%s password=%s dbname=%s", user, password, dbname)
-
+func (a *App) Initialize(hostname, dbname string) {
 	var err error
-	a.DB, err = gorm.Open("postgres", flags)
+	a.Session, err = mgo.Dial(hostname)
 	if err != nil {
-		panic("Failed to connect to database")
+		panic(err)
 	}
 
-	//provision(a.DB)
+	a.DB = a.Session.DB(dbname)
 
 	a.Router = gin.Default()
 	a.Services = []Service{
@@ -45,63 +40,12 @@ func (a *App) Initialize(user, password, dbname string) {
 	}
 }
 
+// Close all active connections running on the application.
+func (a *App) Close() {
+	a.Session.Close()
+}
+
 // Run starts the application.
 func (a *App) Run(addr string) {
 	a.Router.Run()
-}
-
-// Provision the database with some basic models.
-func provision(db *gorm.DB) {
-	log.Print("Provisioning the database (this might take a minute or two)")
-
-	queries := []string{`
-		CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; -- Enable gen_random_uuid()
-		SET TIMEZONE TO 'Etc/UTC';                  -- Set default timezone to UTC
-	`, `
-		-- User Table
-		CREATE TABLE IF NOT EXISTS users(
-			id         UUID         PRIMARY KEY     DEFAULT uuid_generate_v4(),
-			created_at TIMESTAMP    WITH TIME ZONE  DEFAULT now(),
-			updated_at TIMESTAMP    WITH TIME ZONE  DEFAULT now(),
-			deleted_at TIMESTAMP	WITH TIME ZONE,
-
-			email      VARCHAR(254) NOT NULL,
-			password   VARCHAR(74)  NOT NULL
-		);
-	`, `
-		-- Venue Table
-		CREATE TABLE IF NOT EXISTS venues(
-			id         UUID          PRIMARY KEY,
-			created_at TIMESTAMP     WITH TIME ZONE,
-			updated_at TIMESTAMP     WITH TIME ZONE,
-			deleted_at TIMESTAMP		 WITH TIME ZONE,
-
-			google     VARCHAR(256), -- ID for Google API
-			foursquare VARCHAR(256), -- ID for Foursquare API
-			yelp       VARCHAR(256)  -- ID for Yelp API
-		);
-	`, `
-		-- Event Table
-		CREATE TABLE IF NOT EXISTS events(
-			id         UUID         PRIMARY KEY,
-			created_at TIMESTAMP    WITH TIME ZONE,
-			updated_at TIMESTAMP    WITH TIME ZONE,
-			deleted_at TIMESTAMP    WITH TIME ZONE,
-
-			venue      UUID         REFERENCES venues,
-			start_time TIMESTAMP    WITH TIME ZONE,
-			end_time   TIMESTAMP    WITH TIME ZONE,
-
-			facebook   VARCHAR(256) -- ID for Facebook API
-		);
-	`}
-
-	for _, query := range queries {
-		err := db.Exec(query)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	log.Print("Done!")
 }

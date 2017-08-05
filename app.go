@@ -47,5 +47,5 @@ func (a *App) Close() {
 
 // Run starts the application.
 func (a *App) Run(addr string) {
-	a.Router.Run()
+	a.Router.Run(addr)
 }

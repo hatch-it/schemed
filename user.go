@@ -4,8 +4,10 @@ import (
 	"time"
 	"net/http"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	log "github.com/Sirupsen/logrus"
 )
 
 // User contains all user-related data.
@@ -15,7 +17,10 @@ type User struct {
 	Password string `json:"password" form:"password"`
 }
 
-type Users []User
+// UserFilters defines possible filters on User
+type UserFilters struct {
+	Email			string	`json:"email,omitempty" form:"email,omitempty"`
+}
 
 // UserService exposes the User model's endpoints
 type UserService struct {
@@ -23,10 +28,12 @@ type UserService struct {
 	Name string
 }
 
-// Methods required by schemed.Service
+// Initialize the service
 func (s UserService) Initialize() string {
 	return "users"
 }
+
+// Get a single user
 func (s UserService) Get(c *gin.Context) {
 	id := c.Param("id")
 	var model User
@@ -37,20 +44,18 @@ func (s UserService) Get(c *gin.Context) {
 	model.Password = ""
 	c.JSON(http.StatusOK, model)
 }
+
+// Fetch users
 func (s UserService) Fetch(c *gin.Context) {
-	var filters User
-	if c.Bind(&filters) == nil {
-		filters.Password = "" // Don't filter by password
-		var models Users
-		s.DB.C("User").Find(&filters).All(&models)
-		c.JSON(http.StatusOK, models)
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Filters not recognized"})
-	}
+	var models []User
+	s.DB.C("User").Find().All(&models)
+	c.JSON(http.StatusOK, models)
 }
+
+// Create a user 
 func (s UserService) Create(c *gin.Context) {
 	var body User
-	if c.BindJSON(&body) == nil {
+	if c.Bind(&body) == nil {
 		if body.Email == "" || body.Password == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password required"})
 		} else {
@@ -58,21 +63,29 @@ func (s UserService) Create(c *gin.Context) {
 			if err != nil {
 				panic("Unable to encrypt password")
 			}
+			body.ID = bson.NewObjectId()
 			body.Password = string(hash[:])
 			now := time.Now()
 			body.CreatedOn = now
 			body.UpdatedOn = now
-			s.DB.C("User").Insert(&body)
-			body.Password = ""
-			c.JSON(http.StatusOK, body)
+			err = s.DB.C("User").Insert(&body)
+			if err != nil {
+				log.WithError(err).Fatal("Failed to create User")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create User"})
+			} else {
+				body.Password = ""
+				c.JSON(http.StatusOK, body)
+			}
 		}
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Not a valid user"})
 	}
 }
+
+// Update a user
 func (s UserService) Update(c *gin.Context) {
 	var body User
-	if c.BindJSON(&body) == nil {
+	if c.Bind(&body) == nil {
 		if body.Password != "" {
 			hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
 			if err != nil {
@@ -88,6 +101,8 @@ func (s UserService) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Not a valid user"})
 	}
 }
+
+// Delete a user
 func (s UserService) Delete(c *gin.Context) {
 	id := c.Param("id")
 	var model User

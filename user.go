@@ -48,7 +48,7 @@ func (s UserService) Get(c *gin.Context) {
 // Fetch users
 func (s UserService) Fetch(c *gin.Context) {
 	var models []User
-	s.DB.C("User").Find().All(&models)
+	s.DB.C("User").Find(nil).All(&models)
 	c.JSON(http.StatusOK, models)
 }
 

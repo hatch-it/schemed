@@ -53,7 +53,7 @@ func (s EventService) Get(c *gin.Context) {
 // Fetch Events
 func (s EventService) Fetch(c *gin.Context) {
 	var models []Event
-	s.DB.C(s.ModelName).Find().All(&models)
+	s.DB.C(s.ModelName).Find(nil).All(&models)
 	c.JSON(http.StatusOK, models)
 }
 

@@ -72,8 +72,10 @@ func (s EventService) Create(c *gin.Context) {
 			err := s.DB.C(s.ModelName).Insert(&body)
 			if err != nil {
 				log.WithError(err).Fatal("Failed to create " + s.ModelName)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create " + s.ModelName})
+			} else {
+				c.JSON(http.StatusOK, body)
 			}
-			c.JSON(http.StatusOK, body)
 		}
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Not a valid " + s.ModelName})

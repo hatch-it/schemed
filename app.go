@@ -27,7 +27,7 @@ func (a *App) Initialize(hostname, dbname string) {
 
 	a.Router = gin.Default()
 	a.Services = []Service{
-		UserService{a.DB, "users"},
+		UserService{a.DB, "users", "User"},
 		EventService{a.DB, "events", "Event"},
 	}
 

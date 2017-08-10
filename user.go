@@ -25,22 +25,23 @@ type UserFilters struct {
 
 // UserService exposes the User model's endpoints
 type UserService struct {
-	DB   *mgo.Database
-	Name string
+	DB   		*mgo.Database
+	Endpoint	string
+	ModelName	string
 }
 
 // Initialize the service
 func (s UserService) Initialize() string {
-	return "users"
+	return s.Endpoint
 }
 
 // Get a single user
 func (s UserService) Get(c *gin.Context) {
 	id := c.Param("id")
 	var model User
-	err := s.DB.C("User").FindId(id).One(&model)
+	err := s.DB.C(s.ModelName).FindId(id).One(&model)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": s.ModelName + " not found"})
 	}
 	model.Password = ""
 	c.JSON(http.StatusOK, model)
@@ -49,7 +50,7 @@ func (s UserService) Get(c *gin.Context) {
 // Fetch users
 func (s UserService) Fetch(c *gin.Context) {
 	var models []User
-	s.DB.C("User").Find(nil).All(&models)
+	s.DB.C(s.ModelName).Find(nil).All(&models)
 	c.JSON(http.StatusOK, models)
 }
 
@@ -69,10 +70,10 @@ func (s UserService) Create(c *gin.Context) {
 			now := time.Now()
 			body.CreatedOn = now
 			body.UpdatedOn = now
-			err = s.DB.C("User").Insert(&body)
+			err = s.DB.C(s.ModelName).Insert(&body)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to create User")
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create User"})
+				log.WithError(err).Fatal("Failed to create " + s.ModelName)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create " + s.ModelName})
 			} else {
 				body.Password = ""
 				c.JSON(http.StatusOK, body)
@@ -95,11 +96,11 @@ func (s UserService) Update(c *gin.Context) {
 			body.Password = string(hash[:])
 		}
 		id := c.Param("id")
-		s.DB.C("Users").UpdateId(id, &body)
+		s.DB.C(s.ModelName).UpdateId(id, &body)
 		body.Password = ""
 		c.JSON(http.StatusOK, body)
 	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not a valid user"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Not a valid " + s.ModelName})
 	}
 }
 
@@ -107,7 +108,7 @@ func (s UserService) Update(c *gin.Context) {
 func (s UserService) Delete(c *gin.Context) {
 	id := c.Param("id")
 	var model User
-	s.DB.C("User").FindId(id).One(&model)
-	s.DB.C("User").RemoveId(id)
+	s.DB.C(s.ModelName).FindId(id).One(&model)
+	s.DB.C(s.ModelName).RemoveId(id)
 	c.JSON(http.StatusOK, model)
 }

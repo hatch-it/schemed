@@ -32,11 +32,11 @@ func (a *App) Initialize(hostname, dbname string) {
 
 	for _, service := range a.Services {
 		name := service.Initialize()
-		a.Router.GET(name + ":id", service.Get)
+		a.Router.GET(name + "/:id", service.Get)
 		a.Router.GET(name, service.Fetch)
 		a.Router.POST(name, service.Create)
-		a.Router.POST(name + ":id", service.Update)
-		a.Router.DELETE(name + ":id", service.Delete)
+		a.Router.POST(name + "/:id", service.Update)
+		a.Router.DELETE(name + "/:id", service.Delete)
 	}
 }
 

@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  database:
+    image: mongo:3.4.6
+  api:
+    build: .
+    depends_on:
+      - database
+    volumes:
+      - .:/go/src/github.com/puradox/schemed
+    ports:
+      - 3000:3000
+    environment:
+      PORT: 3000
+      DB_HOST: database
+      DB_NAME: schemed
+    # command: sh -c "wait-for database:27017 -- gin"
+    command: gin

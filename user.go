@@ -18,6 +18,7 @@ type User struct {
 }
 
 // UserFilters defines possible filters on User
+// TODO (Sam): Investigate filtering
 type UserFilters struct {
 	Email			string	`json:"email,omitempty" form:"email,omitempty"`
 }

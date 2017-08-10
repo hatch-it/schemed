@@ -19,6 +19,7 @@ type Event struct {
 }
 
 // EventFilters contains all possible filters on Event
+// TODO (Sam): Investigate filtering
 type EventFilters struct {
 	ModelFilters
 	VenueID			*bson.ObjectId	`json:"venueId,omitempty" form:"venueId,omitempty"`

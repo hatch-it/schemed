@@ -1,3 +1,8 @@
 .env
 *.exe
 *.xml
+
+tmp/
+schemed
+*.exe
+*.exe~

@@ -29,6 +29,7 @@ func (a *App) Initialize(hostname, dbname string) {
 	a.Services = []Service{
 		UserService{a.DB, "users", "User"},
 		EventService{a.DB, "events", "Event"},
+		VenueService{a.DB, "venues", "Venue"},
 	}
 
 	for _, service := range a.Services {

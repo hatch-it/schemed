@@ -20,13 +20,12 @@ type Venue struct {
 // VenueService exposes Venue's endpoints
 type VenueService struct {
 	DB			*mgo.Database
-	Endpoint	string
 	ModelName	string
 }
 
-// Initialize the service
-func (s VenueService) Initialize() string {
-	return s.Endpoint
+// Path of the service endpoint
+func (s VenueService) Path() string {
+	return "/venues"
 }
 
 // Get a single Venue

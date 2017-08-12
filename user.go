@@ -26,13 +26,12 @@ type UserFilters struct {
 // UserService exposes the User model's endpoints
 type UserService struct {
 	DB   		*mgo.Database
-	Endpoint	string
 	ModelName	string
 }
 
-// Initialize the service
-func (s UserService) Initialize() string {
-	return s.Endpoint
+// Path of the service endpoint
+func (s UserService) Path() string {
+	return "/users"
 }
 
 // Get a single user

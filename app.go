@@ -27,18 +27,18 @@ func (a *App) Initialize(hostname, dbname string) {
 
 	a.Router = gin.Default()
 	a.Services = []Service{
-		UserService{a.DB, "users", "User"},
-		EventService{a.DB, "events", "Event"},
-		VenueService{a.DB, "venues", "Venue"},
+		UserService{a.DB, "User"},
+		EventService{a.DB, "Event"},
+		VenueService{a.DB, "Venue"},
 	}
 
 	for _, service := range a.Services {
-		name := service.Initialize()
-		a.Router.GET(name + "/:id", service.Get)
-		a.Router.GET(name, service.Fetch)
-		a.Router.POST(name, service.Create)
-		a.Router.POST(name + "/:id", service.Update)
-		a.Router.DELETE(name + "/:id", service.Delete)
+		path := service.Path()
+		a.Router.GET(path + "/:id", service.Get)
+		a.Router.GET(path, service.Fetch)
+		a.Router.POST(path, service.Create)
+		a.Router.POST(path + "/:id", service.Update)
+		a.Router.DELETE(path + "/:id", service.Delete)
 	}
 }
 

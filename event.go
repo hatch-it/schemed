@@ -30,14 +30,13 @@ type EventFilters struct {
 
 // EventService exposes the Event model's endpoints
 type EventService struct {
-	DB			*mgo.Database
-	Endpoint	string
+	DB   		*mgo.Database
 	ModelName	string
 }
 
-// Initialize the service
-func (s EventService) Initialize() string {
-	return s.Endpoint
+// Path of the service endpoint
+func (s EventService) Path() string {
+	return "/events"
 }
 
 // Get a single Event

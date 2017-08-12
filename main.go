@@ -6,14 +6,14 @@ import (
 )
 
 func main() {
+	dbHost := os.Getenv("DB_HOST")
+	dbName := os.Getenv("DB_NAME")
+	port := os.Getenv("PORT")
+
 	app := App{}
-	app.Initialize(
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_NAME"),
-	)
+	app.Initialize(dbHost, dbName)
 	defer app.Close()
 
-	port := os.Getenv("PORT")
 	fmt.Println("Listening on port " + port)
 	app.Run(":" + port)
 }

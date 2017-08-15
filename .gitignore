@@ -4,5 +4,6 @@
 
 tmp/
 schemed
+gin-bin
 *.exe
 *.exe~

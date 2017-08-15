@@ -1,20 +1,21 @@
 package main
 
 import (
+	"net/http"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"net/http"
-	"time"
 )
 
 // User contains all user-related data.
 type User struct {
 	Model
-	Email    string `json:"email" form:"email"`
-	Password string `json:"password" form:"password"`
+	Email    string `json:"email" form:"email" binding:"required"`
+	Password string `json:"password" form:"password" binding:"required"`
 }
 
 // UserFilters defines possible filters on User
@@ -56,31 +57,63 @@ func (s UserService) Fetch(c *gin.Context) {
 // Create a user
 func (s UserService) Create(c *gin.Context) {
 	var body User
-	if c.Bind(&body) == nil {
-		if body.Email == "" || body.Password == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password required"})
-		} else {
-			hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
-			if err != nil {
-				panic("Unable to encrypt password")
-			}
-			body.ID = bson.NewObjectId()
-			body.Password = string(hash[:])
-			now := time.Now()
-			body.CreatedOn = now
-			body.UpdatedOn = now
-			err = s.DB.C(s.ModelName).Insert(&body)
-			if err != nil {
-				log.WithError(err).Fatal("Failed to create " + s.ModelName)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create " + s.ModelName})
-			} else {
-				body.Password = ""
-				c.JSON(http.StatusOK, body)
-			}
-		}
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not a valid user"})
+	if c.Bind(&body) != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error":   true,
+			"message": "Not a valid user",
+		})
 	}
+
+	collection := s.DB.C(s.ModelName)
+
+	// Check for existing users with the same email
+	var existingUsers []User
+	err := collection.Find(bson.M{"email": body.Email}).All(existingUsers)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error":   true,
+			"message": "Unable to check existing users",
+		})
+	}
+
+	if len(existingUsers) > 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error":   true,
+			"message": "Email is taken",
+		})
+	}
+
+	// Encrypt the password
+	var hash []byte
+	hash, err = bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error":   true,
+			"message": "Unable to encrypt password",
+		})
+	}
+
+	// Nice defaults
+	now := time.Now()
+	body.ID = bson.NewObjectId()
+	body.Password = string(hash[:])
+	body.CreatedOn = now
+	body.UpdatedOn = now
+
+	// Create the damn thing already!
+	err = s.DB.C(s.ModelName).Insert(&body)
+	if err != nil {
+		message := "Failed to create " + s.ModelName
+		log.WithError(err).Fatal(message)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error":   true,
+			"message": message,
+		})
+	}
+
+	// Echo the created model, without the password of course
+	body.Password = ""
+	c.JSON(http.StatusOK, body)
 }
 
 // Update a user

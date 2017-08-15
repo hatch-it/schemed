@@ -1,13 +1,13 @@
 package main
 
 import (
-	"time"
-	"net/http"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
-	log "github.com/Sirupsen/logrus"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+	"net/http"
+	"time"
 )
 
 // User contains all user-related data.
@@ -20,13 +20,13 @@ type User struct {
 // UserFilters defines possible filters on User
 // TODO (Sam): Investigate filtering
 type UserFilters struct {
-	Email			string	`json:"email,omitempty" form:"email,omitempty"`
+	Email string `json:"email,omitempty" form:"email,omitempty"`
 }
 
 // UserService exposes the User model's endpoints
 type UserService struct {
-	DB   		*mgo.Database
-	ModelName	string
+	DB        *mgo.Database
+	ModelName string
 }
 
 // Path of the service endpoint
@@ -53,7 +53,7 @@ func (s UserService) Fetch(c *gin.Context) {
 	c.JSON(http.StatusOK, models)
 }
 
-// Create a user 
+// Create a user
 func (s UserService) Create(c *gin.Context) {
 	var body User
 	if c.Bind(&body) == nil {

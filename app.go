@@ -1,17 +1,16 @@
-
 package main
 
 import (
-	"gopkg.in/mgo.v2"
 	"github.com/gin-gonic/gin"
+	"gopkg.in/mgo.v2"
 )
 
 // App contains all the state for the entire application.
 type App struct {
-	Router 		*gin.Engine
-	Session		*mgo.Session
-	DB 			*mgo.Database
-	Services 	[]Service
+	Router   *gin.Engine
+	Session  *mgo.Session
+	DB       *mgo.Database
+	Services []Service
 }
 
 // Initialize takes the details required to connect to the database.
@@ -34,11 +33,11 @@ func (a *App) Initialize(hostname, dbname string) {
 
 	for _, service := range a.Services {
 		path := service.Path()
-		a.Router.GET(path + "/:id", service.Get)
+		a.Router.GET(path+"/:id", service.Get)
 		a.Router.GET(path, service.Fetch)
 		a.Router.POST(path, service.Create)
-		a.Router.POST(path + "/:id", service.Update)
-		a.Router.DELETE(path + "/:id", service.Delete)
+		a.Router.POST(path+"/:id", service.Update)
+		a.Router.DELETE(path+"/:id", service.Delete)
 	}
 }
 

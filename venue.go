@@ -1,26 +1,26 @@
 package main
 
 import (
-	"time"
-	"net/http"
+	log "github.com/Sirupsen/logrus"
+	"github.com/gin-gonic/gin"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/gin-gonic/gin"
-	log "github.com/Sirupsen/logrus"
+	"net/http"
+	"time"
 )
 
 // Venue represents a place where events can occur.
 type Venue struct {
 	Model
-	GoogleID		string 	`json:"googleId" form:"googleId"`
-	FoursquareID	string 	`json:"foursquareId" form:"foursquareId"`
-	YelpID			string 	`json:"yelpId" form:"yelpId"`
+	GoogleID     string `json:"googleId" form:"googleId"`
+	FoursquareID string `json:"foursquareId" form:"foursquareId"`
+	YelpID       string `json:"yelpId" form:"yelpId"`
 }
 
 // VenueService exposes Venue's endpoints
 type VenueService struct {
-	DB			*mgo.Database
-	ModelName	string
+	DB        *mgo.Database
+	ModelName string
 }
 
 // Path of the service endpoint
@@ -46,7 +46,7 @@ func (s VenueService) Fetch(c *gin.Context) {
 	c.JSON(http.StatusOK, models)
 }
 
-// Create a Venue 
+// Create a Venue
 func (s VenueService) Create(c *gin.Context) {
 	var body Venue
 	if c.Bind(&body) == nil {

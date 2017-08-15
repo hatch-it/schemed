@@ -4,10 +4,12 @@
 
 Schemed is an online service that aims to make it easier for people to hangout without repetitive communication.
 
-## /users
+## /_resource_
+ > Where _resource_ can be: **users**, **events**, **venues**
 
- - GET /users - Fetches all the 
- - GET /users/:id - Get a User with the specified ID
- - POST /users - Create a User
- - POST /users/:id - Update a User
- - DELETE /users/:id - Soft delete a User by setting the `deleted_on` field
+ - GET /_resource_ - Fetches all the matching instances of _resource_
+ - GET /_resource_/:id - Get the instance of _resource_ with the specified ID
+ - POST /_resource_ - Create an instance of _resource_
+ - POST /_resource_/:id - Update the instance of _resource_ with the specified ID
+ - DELETE /_resource_/:id - Soft delete the instance of _resource_ with the specified ID
+

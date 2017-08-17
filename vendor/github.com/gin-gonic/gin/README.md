@@ -1,6 +1,6 @@
 # Gin Web Framework
 
-<img align="right" width="159px" src="https://raw.githubusercontent.com/gin-gonic/gin/master/logo.png">
+<img align="right" src="https://raw.githubusercontent.com/gin-gonic/gin/master/logo.jpg">
 
 [![Build Status](https://travis-ci.org/gin-gonic/gin.svg)](https://travis-ci.org/gin-gonic/gin)
  [![codecov](https://codecov.io/gh/gin-gonic/gin/branch/master/graph/badge.svg)](https://codecov.io/gh/gin-gonic/gin)
@@ -13,8 +13,7 @@ Gin is a web framework written in Go (Golang). It features a martini-like API wi
 ![Gin console logger](https://gin-gonic.github.io/gin/other/console.png)
 
 ```sh
-# assume the following codes in example.go file
-$ cat example.go
+$ cat test.go
 ```
 
 ```go
@@ -31,11 +30,6 @@ func main() {
 	})
 	r.Run() // listen and serve on 0.0.0.0:8080
 }
-```
-
-```
-# run example.go and visit 0.0.0.0:8080/ping on browser
-$ go run example.go
 ```
 
 ## Benchmarks
@@ -107,38 +101,6 @@ import "github.com/gin-gonic/gin"
 
 ```go
 import "net/http"
-```
-
-### Use a vendor tool like [Govendor](https://github.com/kardianos/govendor)
-
-1. `go get` govendor
-
-```sh
-$ go get github.com/kardianos/govendor
-```
-2. Create your project folder and `cd` inside
-
-```sh
-$ mkdir -p ~/go/src/github.com/myusername/project && cd "$_"
-```
-
-3. Vendor init your project and add gin
-
-```sh
-$ govendor init
-$ govendor fetch github.com/gin-gonic/gin@v1.2
-```
-
-4. Copy a starting template inside your project
-
-```sh
-$ curl https://raw.githubusercontent.com/gin-gonic/gin/master/examples/basic/main.go > main.go
-```
-
-5. Run your project
-
-```sh
-$ go run main.go
 ```
 
 ## API Examples
@@ -645,8 +607,6 @@ templates/users/index.tmpl
 {{ end }}
 ```
 
-#### Custom Template renderer
-
 You can also use your own html template render
 
 ```go
@@ -660,8 +620,6 @@ func main() {
 }
 ```
 
-#### Custom Delimiters
-
 You may use custom delims
 
 ```go
@@ -670,7 +628,7 @@ You may use custom delims
 	r.LoadHTMLGlob("/path/to/templates"))
 ```  
 
-#### Custom Template Funcs
+#### Add custom template funcs
 
 main.go
 
@@ -920,7 +878,7 @@ func main() {
 		Cache:      autocert.DirCache("/var/www/.cache"),
 	}
 
-	log.Fatal(autotls.RunWithManager(r, &m))
+	log.Fatal(autotls.RunWithManager(r, m))
 }
 ```
 
@@ -998,7 +956,20 @@ func main() {
 }
 ```
 
-## Users  [![Sourcegraph](https://sourcegraph.com/github.com/gin-gonic/gin/-/badge.svg)](https://sourcegraph.com/github.com/gin-gonic/gin?badge)
+## Contributing 
+
+- With issues:
+  - Use the search tool before opening a new issue.
+  - Please provide source code and commit sha if you found a bug.
+  - Review existing issues and provide feedback or react to them.
+- With pull requests:
+  - Open your pull request against develop
+  - Your pull request should have no more than two commits, if not you should squash them.
+  - It should pass all tests in the available continuous integrations systems such as TravisCI.
+  - You should add/modify tests to cover your proposed code changes.
+  - If your pull request contains a new feature, please document it on the README.
+
+## Users
 
 Awesome project lists using [Gin](https://github.com/gin-gonic/gin) web framework.
 

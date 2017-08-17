@@ -1,37 +1,37 @@
 package main
 
 import (
-	"time"
-	"net/http"
+	log "github.com/Sirupsen/logrus"
+	"github.com/gin-gonic/gin"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/gin-gonic/gin"
-	log "github.com/Sirupsen/logrus"
+	"net/http"
+	"time"
 )
 
 // Event defines a social gathering of any sort.
 type Event struct {
 	Model
-	VenueID		bson.ObjectId	`json:"venueId" form:"venueId"`
-	StartTime	time.Time 		`json:"startTime" form:"startTime"`
-	EndTime		time.Time 		`json:"endTime" form:"endTime"`
-	FacebookID	string			`json:"facebookId" form:"facebookId"`
+	VenueID    bson.ObjectId `json:"venueId" form:"venueId"`
+	StartTime  time.Time     `json:"startTime" form:"startTime"`
+	EndTime    time.Time     `json:"endTime" form:"endTime"`
+	FacebookID string        `json:"facebookId" form:"facebookId"`
 }
 
 // EventFilters contains all possible filters on Event
 // TODO (Sam): Investigate filtering
 type EventFilters struct {
 	ModelFilters
-	VenueID			*bson.ObjectId	`json:"venueId,omitempty" form:"venueId,omitempty"`
-	StartTime		*time.Time		`json:"startTime,omitempty" form:"startTime,omitempty"`
-	EndTime			*time.Time		`json:"endTime,omitempty" form:"endTime,omitempty"`
-	FacebookID		*string			`json:"facebookId,omitempty" form:"facebookId,omitempty"`
+	VenueID    *bson.ObjectId `json:"venueId,omitempty" form:"venueId,omitempty"`
+	StartTime  *time.Time     `json:"startTime,omitempty" form:"startTime,omitempty"`
+	EndTime    *time.Time     `json:"endTime,omitempty" form:"endTime,omitempty"`
+	FacebookID *string        `json:"facebookId,omitempty" form:"facebookId,omitempty"`
 }
 
 // EventService exposes the Event model's endpoints
 type EventService struct {
-	DB   		*mgo.Database
-	ModelName	string
+	DB        *mgo.Database
+	ModelName string
 }
 
 // Path of the service endpoint
@@ -57,7 +57,7 @@ func (s EventService) Fetch(c *gin.Context) {
 	c.JSON(http.StatusOK, models)
 }
 
-// Create an Event 
+// Create an Event
 func (s EventService) Create(c *gin.Context) {
 	var body Event
 	if c.Bind(&body) == nil {

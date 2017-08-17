@@ -1,8 +1,8 @@
 package main_test
 
 import (
-	"testing"
 	"github.com/puradox/schemed"
+	"testing"
 )
 
 var app main.App

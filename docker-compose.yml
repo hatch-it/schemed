@@ -12,8 +12,8 @@ services:
     ports:
       - 3000:3000
     environment:
-      PORT: 3001
+      PORT: 3000
       DB_HOST: database
       DB_NAME: schemed
     # command: sh -c "wait-for database:27017 -- gin"
-    command: gin
+    command: realize run

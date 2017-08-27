@@ -7,11 +7,11 @@ RUN apk add --no-cache --virtual bootstrap-deps git wget ca-certificates \
     && wget https://github.com/Eficode/wait-for/raw/master/wait-for -P /bin \
     && chmod +x /bin/wait-for \
     # Download the hot reload tool
-    && go get github.com/codegangsta/gin \
+    && go get github.com/tockins/realize \
     # Clean up
     && apk del bootstrap-deps
 
 COPY . /go/src/github.com/puradox/schemed
 WORKDIR /go/src/github.com/puradox/schemed
 
-CMD gin
+CMD realize run

@@ -1,12 +1,13 @@
 package main
 
 import (
+	"net/http"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"net/http"
-	"time"
 )
 
 // Venue represents a place where events can occur.
@@ -23,9 +24,14 @@ type VenueService struct {
 	ModelName string
 }
 
-// Path of the service endpoint
-func (s VenueService) Path() string {
-	return "/venues"
+// Mount registers all Venue endpoints to the specified router.
+func (s VenueService) Mount(r gin.IRouter) {
+	path := "/venues"
+	r.GET(path+"/:id", s.Get)
+	r.GET(path, s.Fetch)
+	r.POST(path, s.Create)
+	r.POST(path+"/:id", s.Update)
+	r.DELETE(path+"/:id", s.Delete)
 }
 
 // Get a single Venue

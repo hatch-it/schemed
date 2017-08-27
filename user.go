@@ -24,15 +24,20 @@ type UserFilters struct {
 	Email string `json:"email,omitempty" form:"email,omitempty"`
 }
 
-// UserService exposes the User model's endpoints
+// UserService exposes the User model's endpoints.
 type UserService struct {
 	DB        *mgo.Database
 	ModelName string
 }
 
-// Path of the service endpoint
-func (s UserService) Path() string {
-	return "/users"
+// Mount registers all User endpoints to the specified router.
+func (s UserService) Mount(r gin.IRouter) {
+	path := "/users"
+	r.GET(path+"/:id", s.Get)
+	r.GET(path, s.Fetch)
+	r.POST(path, s.Create)
+	r.POST(path+"/:id", s.Update)
+	r.DELETE(path+"/:id", s.Delete)
 }
 
 // Get a single user

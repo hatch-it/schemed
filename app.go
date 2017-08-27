@@ -13,9 +13,11 @@ type App struct {
 	Services []Service
 }
 
-// Initialize takes the details required to connect to the database.
-// Create a connection and wire up the routes to response accordingly.
-func (a *App) Initialize(hostname, dbname string) {
+// New creates an instance of App with the details required to connect to the database.
+// Creates a connection and wire up the routes to response accordingly.
+func New(hostname, dbname string) App {
+	a := App{}
+
 	var err error
 	a.Session, err = mgo.Dial(hostname)
 	if err != nil {
@@ -32,13 +34,10 @@ func (a *App) Initialize(hostname, dbname string) {
 	}
 
 	for _, service := range a.Services {
-		path := service.Path()
-		a.Router.GET(path+"/:id", service.Get)
-		a.Router.GET(path, service.Fetch)
-		a.Router.POST(path, service.Create)
-		a.Router.POST(path+"/:id", service.Update)
-		a.Router.DELETE(path+"/:id", service.Delete)
+		service.Mount(a.Router)
 	}
+
+	return a
 }
 
 // Close all active connections running on the application.

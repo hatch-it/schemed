@@ -10,8 +10,7 @@ func main() {
 	dbName := os.Getenv("DB_NAME")
 	port := os.Getenv("PORT")
 
-	app := App{}
-	app.Initialize(dbHost, dbName)
+	app := New(dbHost, dbName)
 	defer app.Close()
 
 	fmt.Println("Listening on port " + port)

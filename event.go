@@ -1,12 +1,13 @@
 package main
 
 import (
+	"net/http"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"net/http"
-	"time"
 )
 
 // Event defines a social gathering of any sort.
@@ -34,9 +35,14 @@ type EventService struct {
 	ModelName string
 }
 
-// Path of the service endpoint
-func (s EventService) Path() string {
-	return "/events"
+// Mount registers all Event endpoints to the specified router.
+func (s EventService) Mount(r gin.IRouter) {
+	path := "/events"
+	r.GET(path+"/:id", s.Get)
+	r.GET(path, s.Fetch)
+	r.POST(path, s.Create)
+	r.POST(path+"/:id", s.Update)
+	r.DELETE(path+"/:id", s.Delete)
 }
 
 // Get a single Event

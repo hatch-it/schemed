@@ -2,6 +2,8 @@
 
  > Hatch a plan with your friends, effortlessly.
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/hatch-it/schemed)](https://goreportcard.com/report/github.com/hatch-it/schemed) [![GoDoc](https://godoc.org/github.com/hatch-it/schemed?status.svg)](https://godoc.org/github.com/hatch-it/schemed) 
+
 Schemed is an online service that aims to make it easier for people to hangout without repetitive communication.
 
 ## Getting started

@@ -1,4 +1,4 @@
-package main
+package schemed
 
 import (
 	"github.com/gin-gonic/gin"

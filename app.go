@@ -1,7 +1,8 @@
-package main
+package schemed
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/hatch-it/schemed/services"
 	"gopkg.in/mgo.v2"
 )
 
@@ -28,9 +29,9 @@ func New(hostname, dbname string) App {
 
 	a.Router = gin.Default()
 	a.Services = []Service{
-		UserService{a.DB, "User"},
-		EventService{a.DB, "Event"},
-		VenueService{a.DB, "Venue"},
+		services.UserService{DB: a.DB},
+		services.EventService{DB: a.DB},
+		services.VenueService{DB: a.DB},
 	}
 
 	for _, service := range a.Services {

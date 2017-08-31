@@ -5,24 +5,18 @@ import (
 	"os"
 )
 
+func getEnv(key, fallback string) string {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		value = fallback
+	}
+	return value
+}
+
 func main() {
-	var dbHost, dbName, port string
-	var ok bool
-
-	dbHost, ok = os.LookupEnv("DB_HOST")
-	if !ok {
-		dbHost = "localhost"
-	}
-
-	dbName, ok = os.LookupEnv("DB_NAME")
-	if !ok {
-		dbName = "schemed"
-	}
-
-	port, ok = os.LookupEnv("PORT")
-	if !ok {
-		port = "3000"
-	}
+	dbHost := getEnv("DB_HOST", "localhost")
+	dbName := getEnv("DB_NAME", "schemed")
+	port := getEnv("PORT", "3000")
 
 	server := New(dbHost, dbName)
 	defer server.Close()

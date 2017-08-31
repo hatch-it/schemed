@@ -1,4 +1,4 @@
-package schemed
+package main
 
 import (
 	"github.com/gin-gonic/gin"
@@ -11,7 +11,7 @@ type App struct {
 	Router   *gin.Engine
 	Session  *mgo.Session
 	DB       *mgo.Database
-	Services []Service
+	Services []services.Service
 }
 
 // New creates an instance of App with the details required to connect to the database.
@@ -28,7 +28,7 @@ func New(hostname, dbname string) App {
 	a.DB = a.Session.DB(dbname)
 
 	a.Router = gin.Default()
-	a.Services = []Service{
+	a.Services = []services.Service{
 		services.UserService{DB: a.DB},
 		services.EventService{DB: a.DB},
 		services.VenueService{DB: a.DB},

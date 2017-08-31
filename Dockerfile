@@ -11,7 +11,7 @@ RUN apk add --no-cache --virtual bootstrap-deps git wget ca-certificates \
     # Clean up
     && apk del bootstrap-deps
 
-COPY . /go/src/github.com/puradox/schemed
-WORKDIR /go/src/github.com/puradox/schemed
+COPY . /go/src/github.com/hatch-it/schemed
+WORKDIR /go/src/github.com/hatch-it/schemed
 
 CMD realize run

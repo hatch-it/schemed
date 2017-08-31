@@ -8,7 +8,7 @@ services:
     depends_on:
       - database
     volumes:
-      - .:/go/src/github.com/puradox/schemed
+      - .:/go/src/github.com/hatch-it/schemed
     ports:
       - 3000:3000
     environment:

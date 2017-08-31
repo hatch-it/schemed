@@ -49,38 +49,40 @@ func (s UserService) Fetch(c *gin.Context) {
 // Create a user
 func (s UserService) Create(c *gin.Context) {
 	var user models.User
-	if c.Bind(&user) != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error":   true,
+	if err := c.Bind(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Not a valid user",
+			"error":   err.Error(),
 		})
+		return
 	}
 
 	// Check for existing users with the same email
-	var existingUsers []models.User
-	err := s.DB.C("User").Find(bson.M{"email": user.Email}).All(existingUsers)
+	count, err := s.DB.C("User").Find(bson.M{"email": user.Email}).Count()
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error":   true,
+		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Unable to check existing users",
+			"error":   err.Error(),
 		})
+		return
 	}
-
-	if len(existingUsers) > 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error":   true,
-			"message": "Email is taken",
+	if count > 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Not a valid user",
+			"error":   "Email has been taken already",
 		})
+		return
 	}
 
 	// Encrypt the password
 	var hash []byte
 	hash, err = bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error":   true,
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Unable to encrypt password",
+			"error":   err.Error(),
 		})
+		return
 	}
 
 	// Nice defaults
@@ -91,14 +93,13 @@ func (s UserService) Create(c *gin.Context) {
 	user.UpdatedOn = now
 
 	// Create the damn thing already!
-	err = s.DB.C("User").Insert(&user)
-	if err != nil {
-		message := "Failed to create " + "User"
-		log.WithError(err).Fatal(message)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error":   true,
-			"message": message,
+	if err := s.DB.C("User").Insert(&user); err != nil {
+		log.WithError(err).Fatal("Failed to create User")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Failed to create User",
+			"error":   err.Error(),
 		})
+		return
 	}
 
 	// Echo the created model, without the password of course
@@ -109,21 +110,29 @@ func (s UserService) Create(c *gin.Context) {
 // Update a user
 func (s UserService) Update(c *gin.Context) {
 	var user models.User
-	if c.Bind(&user) == nil {
-		if user.Password != "" {
-			hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-			if err != nil {
-				panic("Unable to encrypt password")
-			}
-			user.Password = string(hash[:])
-		}
-		id := c.Param("id")
-		s.DB.C("User").UpdateId(id, &user)
-		user.Password = ""
-		c.JSON(http.StatusOK, user)
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not a valid " + "User"})
+	if err := c.Bind(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Not a valid User",
+			"error":   err.Error(),
+		})
+		return
 	}
+
+	if user.Password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Unable to encrypt password",
+				"error":   err.Error(),
+			})
+			return
+		}
+		user.Password = string(hash[:])
+	}
+	id := c.Param("id")
+	s.DB.C("User").UpdateId(id, &user)
+	user.Password = ""
+	c.JSON(http.StatusOK, user)
 }
 
 // Delete a user

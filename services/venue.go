@@ -30,9 +30,12 @@ func (s VenueService) Mount(r gin.IRouter) {
 func (s VenueService) Get(c *gin.Context) {
 	id := c.Param("id")
 	var venue models.Venue
-	err := s.DB.C("Venue").FindId(id).One(&venue)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Venue" + " not found"})
+	if err := s.DB.C("Venue").FindId(id).One(&venue); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "Venue not found",
+			"error":   err.Error(),
+		})
+		return
 	}
 	c.JSON(http.StatusOK, venue)
 }
@@ -47,21 +50,27 @@ func (s VenueService) Fetch(c *gin.Context) {
 // Create a Venue
 func (s VenueService) Create(c *gin.Context) {
 	var venue models.Venue
-	if c.Bind(&venue) == nil {
-		venue.ID = bson.NewObjectId()
-		now := time.Now()
-		venue.CreatedOn = now
-		venue.UpdatedOn = now
-		err := s.DB.C("Venue").Insert(&venue)
-		if err != nil {
-			log.WithError(err).Fatal("Failed to create " + "Venue")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create " + "Venue"})
-		} else {
-			c.JSON(http.StatusOK, venue)
-		}
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not a valid " + "Venue"})
+	if err := c.Bind(&venue); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Not a valid Venue",
+			"error":   err.Error(),
+		})
+		return
 	}
+
+	venue.ID = bson.NewObjectId()
+	now := time.Now()
+	venue.CreatedOn = now
+	venue.UpdatedOn = now
+	if err := s.DB.C("Venue").Insert(&venue); err != nil {
+		log.WithError(err).Fatal("Failed to create " + "Venue")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Failed to create " + "Venue",
+			"error":   err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, venue)
 }
 
 // Update a Venue

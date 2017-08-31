@@ -33,6 +33,7 @@ func (s EventService) Get(c *gin.Context) {
 	err := s.DB.C("Event").FindId(id).One(&event)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Event" + " not found"})
+		return
 	}
 	c.JSON(http.StatusOK, event)
 }
@@ -47,37 +48,42 @@ func (s EventService) Fetch(c *gin.Context) {
 // Create an Event
 func (s EventService) Create(c *gin.Context) {
 	var event models.Event
-	if c.Bind(&event) == nil {
-		if event.VenueID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Venue required"})
-		} else {
-			event.ID = bson.NewObjectId()
-			now := time.Now()
-			event.CreatedOn = now
-			event.UpdatedOn = now
-			err := s.DB.C("Event").Insert(&event)
-			if err != nil {
-				log.WithError(err).Fatal("Failed to create " + "Event")
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create " + "Event"})
-			} else {
-				c.JSON(http.StatusOK, event)
-			}
-		}
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not a valid " + "Event"})
+	if err := c.Bind(&event); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Not a valid Event",
+			"error":   err.Error(),
+		})
+		return
 	}
+
+	event.ID = bson.NewObjectId()
+	now := time.Now()
+	event.CreatedOn = now
+	event.UpdatedOn = now
+	if err := s.DB.C("Event").Insert(&event); err != nil {
+		log.WithError(err).Fatal("Failed to create Event")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Failed to create Event",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, event)
 }
 
 // Update an Event
 func (s EventService) Update(c *gin.Context) {
 	var event models.Event
-	if c.Bind(&event) == nil {
-		id := c.Param("id")
-		s.DB.C("Event").UpdateId(id, &event)
-		c.JSON(http.StatusOK, event)
-	} else {
+
+	if err := c.Bind(&event); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Not a valid " + "Event"})
+		return
 	}
+
+	id := c.Param("id")
+	s.DB.C("Event").UpdateId(id, &event)
+	c.JSON(http.StatusOK, event)
 }
 
 // Delete an Event

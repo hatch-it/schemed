@@ -22,7 +22,7 @@ func (s VenueService) Mount(r gin.IRouter) {
 	r.GET(path+"/:id", s.Get)
 	r.GET(path, s.Fetch)
 	r.POST(path, s.Create)
-	r.POST(path+"/:id", s.Update)
+	r.PATCH(path+"/:id", s.Update)
 	r.DELETE(path+"/:id", s.Delete)
 }
 

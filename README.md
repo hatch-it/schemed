@@ -2,7 +2,7 @@
 
  > Hatch a plan with your friends, effortlessly.
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/hatch-it/schemed)](https://goreportcard.com/report/github.com/hatch-it/schemed) [![GoDoc](https://godoc.org/github.com/hatch-it/schemed?status.svg)](https://godoc.org/github.com/hatch-it/schemed) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/hatch-it/schemed)](https://goreportcard.com/report/github.com/hatch-it/schemed) [![GoDoc](https://godoc.org/github.com/hatch-it/schemed?status.svg)](https://godoc.org/github.com/hatch-it/schemed)
 
 Schemed is an online service that aims to make it easier for people to hangout without repetitive communication.
 
@@ -18,25 +18,82 @@ cd $GOPATH/src/github.com/puradox/schemed
 docker-compose up
 ```
 
-## API
+## API Overview
 
-The Schemed API is a RESTful web service, which you can learn more about at [REST API Tutorial](http://www.restapitutorial.com/).
+The Schemed API is a *RESTful* web service, which operates upon the idea of **resources** and **CRUD**.
 
-For example,
-```shell
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"username":"xyz","password":"xyz"}' \
-  http://localhost:3000/api/login
+### Resources
 
+Resources are representations of the data that you'll be using from our API.
+Here are the resource types that will be available to you:
+  - Users
+  - Events
+  - Venues
+
+### Operations
+
+There are four basic operations which make up the acronym CRUD.
+Each operation is accessible through HTTP by sending requests to `https://schemed.io/api`.
+
+Operation | Request method and URL | Response (in JSON)
+--------- | ---------------------- | ------------------
+Create    | `POST /resource`       | Created resource with ID
+Read      | `GET /resource`        | Requested resources
+Update    | `PATCH /resource/id`   | Updated resource
+Delete    | `DELETE /resource/id`  | Deleted resource
+
+A more detailed description of REST operations can be found [here](http://www.restapitutorial.com/lessons/httpmethods.html).
+
+### Examples
+
+#### JavaScript
+
+Create an Event
+```js
+const response = await fetch('https://schemed.io/api/events', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    title: 'End of the world party',
+    place: 'Heaven',
+    host: 'Jesus',
+  }),
+})
+const event = await response.json()
+const { id, title, place, host } = event
 ```
 
-### /api/_resource_
- > Where _resource_ can be: **users**, **events**, **venues**
+To retrieve an Event by ID
+```js
+const response = await fetch('https://schemed.io/api/events/123')
+const event = await response.json()
+const { id, title, place, host } = event
+```
 
- - GET /_resource_ - Fetches all the matching instances of _resource_
- - GET /_resource_/:id - Get the instance of _resource_ with the specified ID
- - POST /_resource_ - Create an instance of _resource_
- - POST /_resource_/:id - Update the instance of _resource_ with the specified ID
- - DELETE /_resource_/:id - Soft delete the instance of _resource_ with the specified ID
+Update an Event by ID
+```js
+const response = await fetch('https://schemed.io/api/events/123', {
+  method: 'PATCH',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    title: 'End of the world party',
+    place: 'Hell',
+    host: 'Satan',
+  }),
+})
+const event = await response.json()
+const { id, title, place, host } = event
+```
 
+Delete an Event by ID
+```js
+const response = await fetch('https://schemed.io/api/events/123', {
+  method: 'DELETE',
+})
+const event = await response.json()
+const { id, title, place, host } = event
+```

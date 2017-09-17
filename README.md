@@ -6,18 +6,6 @@
 
 Schemed is an online service that aims to make it easier for people to hangout without repetitive communication.
 
-## Getting started
-
-Clone this repo then use [Docker](https://www.docker.com/) to get it running.
- > Note: `docker-compose` is automatically installed with [_Docker for Mac_](https://www.docker.com/docker-mac)
- > and [_Docker for Windows_](https://www.docker.com/docker-windows)
-
-```shell
-go get github.com/puradox/schemed
-cd $GOPATH/src/github.com/puradox/schemed
-docker-compose up
-```
-
 ## API Overview
 
 The Schemed API is a *RESTful* web service, which operates upon the idea of **resources** and **CRUD**.
@@ -97,3 +85,18 @@ const response = await fetch('https://schemed.io/api/events/123', {
 const event = await response.json()
 const { id, title, place, host } = event
 ```
+
+## How to contribute
+
+Clone this repo then use [Docker](https://www.docker.com/) to get it running.
+ > Note: Make sure you have your `GOPATH` all set up.
+
+```shell
+go get github.com/puradox/schemed
+cd $GOPATH/src/github.com/puradox/schemed
+docker-compose up
+```
+
+Be sure to use [conventional commit messages](https://conventionalcommits.org/) when contributing back to this repo.
+
+Happy hacking!

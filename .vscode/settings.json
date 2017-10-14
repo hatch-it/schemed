@@ -1,7 +1,11 @@
 // Place your settings in this file to overwrite default and user settings.
 {
     "search.exclude": {
-        "**/tmp": true,
-        "**/vendor": true
+        "**/.realize": true,
+        "**/.vscode": true,
+        "**/vendor": true,
+        "Gopkg.lock": true,
+        "Gopkg.toml": true,
+        "LICENSE": true,
     }
 }
